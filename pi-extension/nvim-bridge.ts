@@ -107,6 +107,9 @@ export default function (pi: ExtensionAPI) {
 
         if (ctx.hasUI) ctx.ui.notify(`Received: ${content}`, "info");
 
+        // Truncate by unlinking and recreating — guarantees a new mtime
+        // so the next write is always detected by stat polling.
+        fs.unlinkSync(bridgeFile);
         fs.writeFileSync(bridgeFile, "");
       } catch {}
     });

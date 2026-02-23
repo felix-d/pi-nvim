@@ -28,8 +28,8 @@ local function send(content)
     return
   end
 
-  -- Bridge file must exist (created by pi when /ide is run)
-  if vim.fn.filereadable(file) == 0 then
+  -- Check the bridge dir exists (created by pi when /ide is run)
+  if vim.fn.isdirectory("/tmp/pi-nvim") == 0 then
     vim.notify("pi-nvim: no pi instance connected. Run /ide in pi first.", vim.log.levels.WARN)
     return
   end
