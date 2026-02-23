@@ -88,13 +88,16 @@ export default function (pi: ExtensionAPI) {
 
   function startWatching(bridgeFile: string, ctx: any) {
     if (watcher) return;
+    let lastContent = "";
     // Use watchFile (stat polling) instead of watch — fs.watch on macOS
     // doesn't reliably fire when another process overwrites a file in-place,
-    // which is what vim.fn.writefile() does.
+    // which is what vim.fn.writefile() does. Track last seen content to
+    // avoid reacting to our own clears.
     fs.watchFile(bridgeFile, { interval: 100, persistent: false }, () => {
       try {
         const content = fs.readFileSync(bridgeFile, "utf-8").trim();
-        if (!content) return;
+        if (!content || content === lastContent) return;
+        lastContent = content;
 
         pi.sendMessage(
           {
@@ -107,10 +110,8 @@ export default function (pi: ExtensionAPI) {
 
         if (ctx.hasUI) ctx.ui.notify(`Received: ${content}`, "info");
 
-        // Truncate by unlinking and recreating — guarantees a new mtime
-        // so the next write is always detected by stat polling.
-        fs.unlinkSync(bridgeFile);
         fs.writeFileSync(bridgeFile, "");
+        lastContent = "";
       } catch {}
     });
     // Store a sentinel so we know we're watching (watchFile has no return value)
