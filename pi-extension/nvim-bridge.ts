@@ -110,7 +110,6 @@ export default function (pi: ExtensionAPI) {
 
         if (ctx.hasUI) ctx.ui.notify(`Received: ${content}`, "info");
 
-        fs.writeFileSync(bridgeFile, "");
         lastContent = "";
       } catch {}
     });
