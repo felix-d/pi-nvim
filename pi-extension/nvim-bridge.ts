@@ -55,6 +55,33 @@ function findNvimSockets(): string[] {
   return sockets;
 }
 
+/** Query a nvim socket for its current buffer path. Returns null on failure. */
+function getNvimCurrentBuffer(socket: string): string | null {
+  try {
+    const result = require("node:child_process").spawnSync(
+      "nvim",
+      ["--server", socket, "--remote-expr", 'expand("%:p")'],
+      { encoding: "utf-8", timeout: 2000 },
+    );
+    const out = result.stdout?.trim();
+    return out || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Build labeled display strings for a list of sockets. */
+function labelSockets(sockets: string[]): { label: string; socket: string }[] {
+  return sockets.map((socket) => {
+    const buf = getNvimCurrentBuffer(socket);
+    const home = os.homedir();
+    const display = buf
+      ? buf.replace(home, "~")
+      : "(no buffer)";
+    return { label: display, socket };
+  });
+}
+
 export default function (pi: ExtensionAPI) {
   let watcher: fs.FSWatcher | null = null;
   let myBridgeFile: string | null = null;
@@ -143,10 +170,15 @@ export default function (pi: ExtensionAPI) {
         return;
       }
 
-      const chosen = await ctx.ui.select("Connect to nvim instance:", sockets);
+      const labeled = labelSockets(sockets);
+      const chosen = await ctx.ui.select(
+        "Connect to nvim instance:",
+        labeled.map((l) => l.label),
+      );
       if (!chosen) return; // user cancelled
 
-      pair(chosen, ctx);
+      const match = labeled.find((l) => l.label === chosen)!;
+      pair(match.socket, ctx);
       ctx.ui.notify(`IDE connected: ${chosen}`, "success");
     },
   });
