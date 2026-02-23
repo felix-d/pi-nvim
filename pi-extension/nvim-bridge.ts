@@ -88,7 +88,10 @@ export default function (pi: ExtensionAPI) {
 
   function startWatching(bridgeFile: string, ctx: any) {
     if (watcher) return;
-    watcher = fs.watch(bridgeFile, () => {
+    // Use watchFile (stat polling) instead of watch — fs.watch on macOS
+    // doesn't reliably fire when another process overwrites a file in-place,
+    // which is what vim.fn.writefile() does.
+    fs.watchFile(bridgeFile, { interval: 100, persistent: false }, () => {
       try {
         const content = fs.readFileSync(bridgeFile, "utf-8").trim();
         if (!content) return;
@@ -107,6 +110,8 @@ export default function (pi: ExtensionAPI) {
         fs.writeFileSync(bridgeFile, "");
       } catch {}
     });
+    // Store a sentinel so we know we're watching (watchFile has no return value)
+    watcher = { close: () => fs.unwatchFile(bridgeFile) } as any;
   }
 
   function pair(nvimSocket: string, ctx: any) {
