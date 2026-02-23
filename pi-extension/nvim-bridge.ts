@@ -106,6 +106,8 @@ export default function (pi: ExtensionAPI) {
         );
 
         if (ctx.hasUI) ctx.ui.notify(`Received: ${content}`, "info");
+
+        fs.writeFileSync(bridgeFile, "");
       } catch {}
     });
     // Store a sentinel so we know we're watching (watchFile has no return value)
