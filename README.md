@@ -85,15 +85,12 @@ Each nvim instance gets its own bridge file. Open two nvim instances, run `/ide`
 
 ```lua
 require("pi-nvim").setup({
-  -- Keybindings (set to false to disable)
   keys = {
-    send_line = "<leader>pl",
+    send_line = "<leader>pl",  -- set to false to disable
     send_file = "<leader>pf",
     send_selection = "<leader>ps",
   },
-
-  -- Show notifications when sending
-  notify = true,
+  notify = true,  -- show a notification when sending
 })
 ```
 
