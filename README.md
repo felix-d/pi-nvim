@@ -6,7 +6,7 @@ Press a keybinding in Neovim and the file path + line number appears instantly i
 
 ## How it works
 
-The plugin writes file references to a bridge file (`/tmp/pi-nvim-bridge.txt`). A pi extension watches this file and injects the references into the active conversation.
+Each nvim instance has a unique server socket (e.g. `/tmp/nvim.abc123/0`). The plugin writes references to a per-instance bridge file under `/tmp/pi-nvim/`. Run `/ide` in a pi instance to pair it with that nvim — multiple pi+nvim pairs can coexist independently.
 
 Both sides are needed:
 1. **Neovim plugin** — sends file paths on keybinding press
@@ -47,6 +47,26 @@ Or with default keybindings:
 }
 ```
 
+## Usage
+
+After installing both sides, connect a pi instance to nvim:
+
+```
+/ide
+```
+
+That's it. Pi will auto-detect the nvim socket from `$NVIM` (set automatically when pi runs inside a nvim terminal buffer). If pi is running outside nvim, pass the socket path explicitly:
+
+```
+/ide /tmp/nvim.abc123/0
+```
+
+Run `:echo v:servername` in nvim to find the socket path.
+
+### Multiple instances
+
+Each nvim instance gets its own bridge file. Open two nvim instances, run `/ide` in a different pi instance for each — they work completely independently.
+
 ## Default keybindings
 
 | Mode | Key | Action |
@@ -65,9 +85,6 @@ Or with default keybindings:
 
 ```lua
 require("pi-nvim").setup({
-  -- Path to the bridge file (must match the pi extension)
-  bridge_file = "/tmp/pi-nvim-bridge.txt",
-
   -- Keybindings (set to false to disable)
   keys = {
     send_line = "<leader>pl",

@@ -1,7 +1,6 @@
 local M = {}
 
 M.config = {
-  bridge_file = "/tmp/pi-nvim-bridge.txt",
   keys = {
     send_line = "<leader>pl",
     send_file = "<leader>pf",
@@ -10,8 +9,33 @@ M.config = {
   notify = true,
 }
 
+-- Returns the bridge file path for this nvim instance.
+-- The pi extension keys bridge files by nvim server socket, with slashes
+-- replaced by '%' so it's a flat filename under /tmp/pi-nvim/.
+local function bridge_file()
+  local socket = vim.fn.serverlist()[1] or ""
+  if socket == "" then
+    return nil, "nvim server socket not available"
+  end
+  local escaped = socket:gsub("/", "%%")
+  return "/tmp/pi-nvim/" .. escaped, nil
+end
+
 local function send(content)
-  vim.fn.writefile({ content }, M.config.bridge_file)
+  local file, err = bridge_file()
+  if not file then
+    vim.notify("pi-nvim: " .. err, vim.log.levels.ERROR)
+    return
+  end
+
+  -- Bridge file must exist (created by pi when /ide is run)
+  if vim.fn.filereadable(file) == 0 then
+    vim.notify("pi-nvim: no pi instance connected. Run /ide in pi first.", vim.log.levels.WARN)
+    return
+  end
+
+  vim.fn.writefile({ content }, file)
+
   if M.config.notify then
     vim.notify("Sent to pi: " .. content, vim.log.levels.INFO)
   end
