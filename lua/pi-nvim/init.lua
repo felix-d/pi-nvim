@@ -37,7 +37,7 @@ local function send(content)
   vim.fn.writefile({ content }, file)
 
   if M.config.notify then
-    vim.notify("Sent to pi: " .. content, vim.log.levels.INFO)
+    vim.api.nvim_echo({ { "Sent to pi: " .. content, "Comment" } }, false, {})
   end
 end
 
